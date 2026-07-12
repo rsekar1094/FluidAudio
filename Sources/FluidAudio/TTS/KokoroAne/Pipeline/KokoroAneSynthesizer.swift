@@ -68,11 +68,18 @@ public struct KokoroAneSynthesizer {
         )
 
         // duration → pred_dur (int32, rounded, clamped ≥ 1)
+        // ANE-generation-specific numerics can occasionally emit a non-finite
+        // or out-of-Int32-range duration; Int32(Float) traps on those inputs
+        // instead of failing gracefully, so validate before converting.
         let duration = try outputArray(postOut, key: "duration", stage: .postAlbert)
         let durFloats = KokoroAneArrays.readFloats(duration)
-        let predDur = durFloats.map { d -> Int32 in
-            let r = Int32(Float(d).rounded())
-            return max(r, 1)
+        let predDur = try durFloats.enumerated().map { index, d -> Int32 in
+            let rounded = Float(d).rounded()
+            guard rounded.isFinite, abs(rounded) < Float(Int32.max) else {
+                throw KokoroAneError.nonFiniteDuration(
+                    stage: KokoroAneStage.postAlbert.rawValue, value: Float(d), index: index)
+            }
+            return max(Int32(rounded), 1)
         }
         let tA = predDur.reduce(0) { $0 + Int($1) }
         if tA > KokoroAneConstants.maxAcousticFrames {

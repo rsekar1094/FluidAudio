@@ -11,6 +11,7 @@ public enum KokoroAneError: Error, LocalizedError {
     case phonemeSequenceTooLong(Int)
     case inputProcessingFailed(String)
     case acousticFramesExceedCap(have: Int, cap: Int)
+    case nonFiniteDuration(stage: String, value: Float, index: Int)
     case predictionFailed(stage: String, underlying: Error)
     case unexpectedOutputShape(stage: String, expected: String, got: String)
     case audioConversionFailed(String)
@@ -35,6 +36,8 @@ public enum KokoroAneError: Error, LocalizedError {
             return "KokoroAne input processing failed: \(detail)"
         case .acousticFramesExceedCap(let have, let cap):
             return "KokoroAne PostAlbert produced T_a=\(have) frames > MAX_FRAMES=\(cap). Chunk the input."
+        case .nonFiniteDuration(let stage, let value, let index):
+            return "KokoroAne stage '\(stage)' produced non-finite duration \(value) at index \(index)."
         case .predictionFailed(let stage, let err):
             return "KokoroAne stage '\(stage)' failed: \(err.localizedDescription)"
         case .unexpectedOutputShape(let stage, let expected, let got):
